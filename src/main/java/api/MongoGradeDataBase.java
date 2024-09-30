@@ -242,10 +242,6 @@ public class MongoGradeDataBase implements GradeDataBase {
     }
 
     @Override
-    // TODO Task 3b: Implement this method
-    //       Hint: Read the Grade API documentation for getMyTeam (link below) and refer to the above similar
-    //             methods to help you write this code (copy-and-paste + edit as needed).
-    //             https://www.postman.com/cloudy-astronaut-813156/csc207-grade-apis-demo/folder/isr2ymn/get-my-team
     public Team getMyTeam() {
         final OkHttpClient client = new OkHttpClient().newBuilder()
                 .build();
@@ -255,13 +251,29 @@ public class MongoGradeDataBase implements GradeDataBase {
                 .addHeader(TOKEN, getAPIToken())
                 .addHeader(CONTENT_TYPE, APPLICATION_JSON)
                 .build();
+        Team team = null;
+        try {
+            final Response response = client.newCall(request).execute();
+            final JSONObject responseBody = new JSONObject(response.body().string());
 
-        final Response response;
-        final JSONObject responseBody;
+            if (responseBody.getInt(STATUS_CODE) == SUCCESS_CODE) {
+                final JSONObject teamObject = responseBody.getJSONObject("team");
 
-        // TODO Task 3b: Implement the logic to get the team information
-        // HINT: Look at the formTeam method to get an idea on how to parse the response
-
-        return null;
+                // HINT: Look at the formTeam method to get an idea on how to parse the response
+                String name = teamObject.getString(NAME);
+                JSONArray members = teamObject.getJSONArray("members");
+                String[] memberList = new String[members.length()];
+                for (int i = 0; i < members.length(); i++) {
+                    JSONObject member = members.getJSONObject(i);
+                    String memberName = member.getString(NAME);
+                    memberList[i] = memberName;
+                }
+                team = new Team(name, memberList);
+            }
+        }
+        catch (IOException | JSONException event) {
+            throw new RuntimeException(event);
+        }
+        return team;
     }
 }
